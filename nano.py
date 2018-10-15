@@ -19,6 +19,7 @@ parser.add_argument('-e','--encrypt',action='store_true',help='Encrypt Novel')
 parser.add_argument('-d','--decrypt',action='store_true',help='Decrypt Novel')
 parser.add_argument('-m','--merge',action='store_true',help='Merge Novel')
 parser.add_argument('-g','--generate',metavar='N',help='Generate Template with N chapters')
+parser.add_argument('-p','--prepare',action='store_true',help='Prepare Directory')
 args = parser.parse_args();
 
 def generateKey():
@@ -49,7 +50,14 @@ def generate(path,extension,numberOfChapters):
             tmp.write(TEMPLATE_TEXT%chapter)
         print(filename)
 
-
+def prepare():
+    os.mkdir('characters')
+    os.mkdir('setting')
+    os.mkdir('plot')
+    os.mkdir('novel')
+    os.mkdir('out')
+    os.mkdir('stuff')
+    print("Done.")
 
 def merge(path,extension,outfile):
     files = getNovelFiles(path,extension)
@@ -125,3 +133,7 @@ if(args.generate):
     numberOfChapters = int(args.generate)
     print("Generating %d chapters in directory %s"%(numberOfChapters,NOVEL_DIR))
     generate(NOVEL_DIR,NOVEL_EXTENSION,numberOfChapters)
+
+if(args.prepare):
+    prepare()
+    sys.exit(0)
