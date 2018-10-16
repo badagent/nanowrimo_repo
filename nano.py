@@ -4,13 +4,14 @@ import os
 import sys
 from cryptography.fernet import Fernet
 
-
-NOVEL_DIR = '.'+os.sep+'novel'
+ENC_DIRS = ['novel','plot','setting','stuff','characters']
+NOVEL_DIR = ['novel']
 NOVEL_EXTENSION = '.md'
 ENC_EXTENSION = '.enc'
 OUT_FILE = '.'+os.sep+'out'+os.sep+'novel.md'
 TEMPLATE_TEXT = "# Chapter %d\nAdd some content"
 TEMPLATE_NAME = "chapter_%s.md"
+
 #Parser Arguments
 parser = argparse.ArgumentParser(description='NaNoWriMo Management Script')
 parser.add_argument('-c','--count',action='store_true',help='Output wordcount')
@@ -25,24 +26,28 @@ args = parser.parse_args();
 def generateKey():
     key = Fernet.generate_key()
     #TODO Safety: Don't overwrite old key
-    with open("secret.key",'w') as tmp:
+    with open("secret.key",'wb') as tmp:
         tmp.write(key)
 
 def loadKey():
-    with open("secret.key",'r') as tmp:
+    with open("secret.key",'rb') as tmp:
         key = tmp.read()
     return key
     
-def getNovelFiles(path,extension):
-    if(path[-1:]==os.sep):
-        path=path[:-1]
+def getNovelFiles(paths,extension):
     files = []
-    for filename in os.listdir(path):
-        if(filename[-len(extension):]==extension):
-            files.append(path+os.sep+filename)
+    for path in paths:
+        if(path[-1:]==os.sep):
+            path=path[:-1]
+        path = '.'+os.sep+path
+        for filename in os.listdir(path):
+            if(filename[-len(extension):]==extension):
+                files.append(path+os.sep+filename)
     return files
 
-def generate(path,extension,numberOfChapters):
+
+def generate(paths,extension,numberOfChapters):
+    path = '.'+os.sep+paths[0]
     for i in range(numberOfChapters):
         chapter = i+1
         filename = path + os.sep + TEMPLATE_NAME%str(chapter).zfill(2)
@@ -59,8 +64,9 @@ def prepare():
     os.mkdir('stuff')
     print("Done.")
 
-def merge(path,extension,outfile):
-    files = getNovelFiles(path,extension)
+def merge(paths,extension,outfile):
+    files = getNovelFiles(paths,extension)
+    files.sort()
     print(files)
     with open(outfile,'w') as out:
         for file in files:
@@ -70,28 +76,28 @@ def merge(path,extension,outfile):
                 out.write(text)
                 out.write('\n---\n')
 
-def encrypt(path,extension,enc_extension):
+def encrypt(paths,extension,enc_extension):
     key = loadKey()
     f = Fernet(key)
-    files = getNovelFiles(path,extension)
+    files = getNovelFiles(paths,extension)
     for file in files:
         file_enc = file+enc_extension
         print("%s -> %s"%(file,file_enc))
-        with open(file,'r') as plain:
+        with open(file,'rb') as plain:
             token = f.encrypt(plain.read())
-            with open(file_enc,'w') as cipher:
+            with open(file_enc,'wb') as cipher:
                 cipher.write(token)
 
-def decrypt(path,extension,enc_extension):
+def decrypt(paths,extension,enc_extension):
     key = loadKey()
     f = Fernet(key)
-    files = getNovelFiles(path,enc_extension)
+    files = getNovelFiles(paths,enc_extension)
     for file in files:
         file_dec = file[:-len(enc_extension)]
         print("%s -> %s"%(file,file_dec))
-        with open(file,'r') as cipher:
+        with open(file,'rb') as cipher:
             plaintext = f.decrypt(cipher.read())
-            with open(file_dec,'w') as plain:
+            with open(file_dec,'wb') as plain:
                 plain.write(plaintext)
 
 def getWordCount():
@@ -115,12 +121,12 @@ if(args.generatekey):
     sys.exit()
 
 if(args.encrypt):
-    encrypt(NOVEL_DIR,NOVEL_EXTENSION,ENC_EXTENSION)
+    encrypt(ENC_DIRS,NOVEL_EXTENSION,ENC_EXTENSION)
     print("Done.")
     sys.exit(0)
 
 if(args.decrypt):
-    decrypt(NOVEL_DIR,NOVEL_EXTENSION,ENC_EXTENSION)
+    decrypt(ENC_DIRS,NOVEL_EXTENSION,ENC_EXTENSION)
     print("Done.")
     sys.exit(0)
 
