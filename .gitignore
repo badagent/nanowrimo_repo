@@ -1,7 +1,10 @@
 *.key
 novel/*.md
+characters/*.md
+stuff/*.md
+plot/*.md
+settings/*.md
 out/
-
 .vscode
 
 # Byte-compiled / optimized / DLL files
